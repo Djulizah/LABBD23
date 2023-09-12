@@ -14,10 +14,10 @@
    
    cd LABBD23
    git branch NIM
-   git checkout NIM_ANDA
+   git checkout NIM
    
-   mkdir NIM_ANDA
-   cd NIM_ANDA
+   mkdir NIM
+   cd NIM
    
    ```
    
@@ -48,8 +48,7 @@
     
    ```sh
    
-   # pastikan proses commit telah selesai terhadap setiap file
-   git push origin NIM_ANDA
+   git push origin NIM
    
    ```
    
