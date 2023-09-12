@@ -1,4 +1,6 @@
 # GUIDE
+> Visual for better understanding https://youtu.be/7AM1hRSPggs
+
 1. **Fork** repository
    
 3. **Clone** repository
