@@ -1,6 +1,4 @@
-# LABBD23: Repository for group 10 
-
-## GUIDE
+# GUIDE
 1. **Fork** repository
    
 3. **Clone** repository
