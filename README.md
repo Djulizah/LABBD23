@@ -7,7 +7,7 @@
    
    ```sh
    
-   git clone https://github.com/Username Github/LABBD23
+   git clone https://github.com/Djulizah/LABBD23
    
    ```
 4. Branch making with **NIM**
