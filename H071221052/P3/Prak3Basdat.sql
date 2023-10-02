@@ -68,5 +68,5 @@ DROP TABLE mahasiswa;
 ALTER TABLE dosen DROP FOREIGN KEY dosen_ibfk_1;
 DROP TABLE mahasiswa;
 
-ALTER TABLE dosen ADD FOREIGN KEY (nim_mahasiswa) REFERENCES mahasiswa (NIM) ON UPDATE CASCADE ;
-
+ALTER TABLE dosen ADD FOREIGN KEY (nim_mahasiswa) REFERENCES mahasiswa (NIM) ON DELETE CASCADE ON UPDATE CASCADE ;
+-- untuk menngubah yang ada ditabel yang terhubung dengan foreignkey
