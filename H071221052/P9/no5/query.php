@@ -12,14 +12,11 @@ class MyQuery
     echo "Daftar Orderan" . "\n";
 
     // Todo [1] : Buatkan query untuk menampilkan 5 data dari kolom inputan dan customernumber sebagai id yang berasal dari tabel customer dan orders  
-    $sql = "SELECT customernumber id,  $input
-				FROM (
-				SELECT c.*, o.orderNumber, o.orderDate, o.requiredDate, o.shippedDate, o.status, o.comments
-				FROM classicmodels.customers c
-					  JOIN classicmodels.orders o ON c.customerNumber=o.customerNumber 
-				GROUP BY c.customerNumber
-				LIMIT 5
-				) ab";
+    $sql = "SELECT DISTINCT $input, customers.customerNumber id from customers 
+            inner join orders on customers.customerNumber = orders.customerNumber
+            group by $input 
+            order by customers.customerNumber asc
+            limit 5 ";
 
     $resultSet = array();
     // Jalankan Query dan Menampilkan
@@ -67,16 +64,13 @@ class MyQuery
     $new_name = readline('> ');
 
     // TODO [2] tambahkan kode untuk menonaktifkan auto commit
-    $this->conn->autocommit(false);
+    $this->conn->autocommit(FALSE);
 
     // TODO [3] start transaction 
     $this->conn->begin_transaction();
 
     // TODO [4] Query untuk mengecek Apakah Nilai inputan Ada.
-    $sql_check = "SELECT c.customerNumber, $kolom
-				FROM classicmodels.customers c
-				WHERE $kolom='".$input."'
-				";
+    $sql_check = "SELECT $kolom FROM customers WHERE $kolom = '$input'";
 
 
     $result_check = $this->conn->query($sql_check);
@@ -85,10 +79,9 @@ class MyQuery
       echo "Value tidak tersedia pada tabel";
       exit;
     }
-	
-	$row=$result_check->fetch_array();
-    // TODO [5] : masukkan query untuk mengupdate value kolom berdasarkan inputan
-    $sql = "UPDATE classicmodels.customers SET $kolom='".$new_name."' WHERE customerNumber=".$row['customerNumber']."";
+
+    // TODO [5] : masukkan query untuk mengupdate nama berdasarkan id
+    $sql = "UPDATE customers SET $kolom='$new_name' where $kolom = '$input'";
     $this->conn->query($sql);
     
 
@@ -113,5 +106,4 @@ class MyQuery
       }
     }
   }
-  
 }
