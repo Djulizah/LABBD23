@@ -106,9 +106,9 @@ HAVING Keterangan IS NOT NULL;eterangan IS NOT NULL;
 
 -- NO. 6
 
-START TRANSACTION;ANSACTION;
+START TRANSACTION;
 
-SELECT * FROM orderdetails FROM orderdetails
-DELETE FROM orderdetailsROM orderdetails
+SELECT * FROM orderdetails 
+DELETE FROM orderdetails 
 
 ROLLBACK
