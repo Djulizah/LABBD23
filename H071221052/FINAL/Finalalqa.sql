@@ -71,22 +71,67 @@ DROP DATABASE GENSHIN;
 
 -- NOMOR 4
 USE SAKILA;
+-- SELECT
+--     staff.staff_id,
+--     CONCAT(staff.first_name, ' ', staff.last_name) AS 'Staff Name',
+--     COUNT(rental.rental_id) AS 'Staff Total Customer Count',
+--     SUM(payment.amount * 0.8) AS 'Staff Income'
+-- FROM
+--     staff
+-- JOIN
+--     payment ON staff.staff_id = payment.staff_id
+-- JOIN
+--     rental ON payment.rental_id = rental.rental_id
+-- GROUP BY
+--     staff.staff_id
+-- ORDER BY
+--     'Staff Income' DESC
+-- LIMIT 1;
+
 SELECT
     staff.staff_id,
     CONCAT(staff.first_name, ' ', staff.last_name) AS 'Staff Name',
-    COUNT(rental.rental_id) AS 'Staff Total Customer Count',
-    SUM(payment.amount * 0.8) AS 'Staff Income'
+    COUNT(customer.customer_id) AS 'Staff Total Customer Count',
+    SUM(rental.customer_id * 0.8) AS 'Staff Income'
 FROM
     staff
 JOIN
     payment ON staff.staff_id = payment.staff_id
 JOIN
     rental ON payment.rental_id = rental.rental_id
+JOIN
+    customer ON rental.customer_id = customer.customer_id
 GROUP BY
     staff.staff_id
 ORDER BY
     'Staff Income' DESC
 LIMIT 1;
+
+SELECT
+    staff.staff_id,
+    CONCAT(staff.first_name, ' ', staff.last_name) AS 'Staff Name',
+    COUNT(subquery.customer_id) AS 'Staff Total Customer Count',
+    SUM(subquery.total_rental * 0.8) AS 'Staff Income'
+FROM
+    staff
+JOIN (
+    SELECT
+        payment.staff_id,
+        rental.customer_id,
+        COUNT(rental.rental_id) AS total_rental
+    FROM
+        payment
+    JOIN
+        rental ON payment.rental_id = rental.rental_id
+    GROUP BY
+        payment.staff_id, rental.customer_id
+) AS subquery ON subquery.staff_id = staff.staff_id
+GROUP BY
+    staff.staff_id
+ORDER BY
+    'Staff Income' DESC
+LIMIT 1;
+-- ada dua jawaban ini kak, nda tau mana benar
 
 -- NOMOR 5
 use sakila;
@@ -112,14 +157,47 @@ WHERE
   ranking = 1;
 
 -- NOMOR 6  
+-- SELECT
+--     CASE
+--         WHEN TIMESTAMPDIFF(SECOND, MAX(last_update), NOW()) < 60 THEN CONCAT('Terakhir diupdate ', TIMESTAMPDIFF(SECOND, MAX(last_update), NOW()), ' detik lalu')
+--         WHEN TIMESTAMPDIFF(MINUTE, MAX(last_update), NOW()) < 60 THEN CONCAT('Terakhir diupdate ', TIMESTAMPDIFF(MINUTE, MAX(last_update), NOW()), ' menit lalu')
+--         WHEN TIMESTAMPDIFF(HOUR, MAX(last_update), NOW()) < 24 THEN CONCAT('Terakhir diupdate ', TIMESTAMPDIFF(HOUR, MAX(last_update), NOW()), ' jam lalu')
+--         ELSE CONCAT('Terakhir diupdate ', DATE_FORMAT(MAX(last_update), '%W, %d %M %Y'))
+--     END AS last_update,
+--     CONCAT('Perubahan pada data ', table_name) AS action
+-- FROM (
+--     SELECT last_update, 'store' AS table_name FROM store
+--     UNION ALL
+--     SELECT last_update, 'payment' FROM payment
+--     UNION ALL
+--     SELECT last_update, 'rental' FROM rental
+--     UNION ALL
+--     SELECT last_update, 'film' FROM film
+--     UNION ALL
+--     SELECT last_update, 'actor' FROM actor
+--     UNION ALL
+--     SELECT last_update, 'inventory' FROM inventory
+-- ) AS updates
+-- GROUP BY last_update, table_name
+-- ORDER BY last_update DESC
+-- LIMIT 5;
+
 SELECT
     CASE
-        WHEN TIMESTAMPDIFF(SECOND, MAX(last_update), NOW()) < 60 THEN CONCAT('Terakhir diupdate ', TIMESTAMPDIFF(SECOND, MAX(last_update), NOW()), ' detik lalu')
-        WHEN TIMESTAMPDIFF(MINUTE, MAX(last_update), NOW()) < 60 THEN CONCAT('Terakhir diupdate ', TIMESTAMPDIFF(MINUTE, MAX(last_update), NOW()), ' menit lalu')
-        WHEN TIMESTAMPDIFF(HOUR, MAX(last_update), NOW()) < 24 THEN CONCAT('Terakhir diupdate ', TIMESTAMPDIFF(HOUR, MAX(last_update), NOW()), ' jam lalu')
+        WHEN ABS(TIMESTAMPDIFF(HOUR, '2006-02-23 05:00:00', MAX(last_update))) > 24 THEN CONCAT_WS(',', DAYNAME(MAX(last_update)), DATE_FORMAT(MAX(last_update), '%d %M %Y'))
+        WHEN ABS(TIMESTAMPDIFF(SECOND, '2006-02-23 05:00:00', MAX(last_update))) > 60 THEN CONCAT_WS(',', DAYNAME(MAX(last_update)), DATE_FORMAT(MAX(last_update), '%d %M %Y'))
+        WHEN ABS(TIMESTAMPDIFF(MINUTE, '2006-02-23 05:00:00', MAX(last_update))) > 60 THEN CONCAT_WS(',', DAYNAME(MAX(last_update)), DATE_FORMAT(MAX(last_update), '%d %M %Y'))
         ELSE CONCAT('Terakhir diupdate ', DATE_FORMAT(MAX(last_update), '%W, %d %M %Y'))
     END AS last_update,
-    CONCAT('Perubahan pada data ', table_name) AS action
+    CASE
+        WHEN table_name = 'store' THEN 'Perubahan Data Store'
+        WHEN table_name = 'payment' THEN 'Perubahan Data Payment'
+        WHEN table_name = 'rental' THEN 'Perubahan Data Rental'
+        WHEN table_name = 'film' THEN 'Perubahan Data Film'
+        WHEN table_name = 'actor' THEN 'Perubahan Data Actor'
+        WHEN table_name = 'inventory' THEN 'Perubahan Data Inventory'
+        ELSE 'Perubahan Data Lainnya'
+    END AS action
 FROM (
     SELECT last_update, 'store' AS table_name FROM store
     UNION ALL
@@ -133,6 +211,72 @@ FROM (
     UNION ALL
     SELECT last_update, 'inventory' FROM inventory
 ) AS updates
-GROUP BY last_update, table_name
-ORDER BY last_update DESC
+GROUP BY table_name
+ORDER BY MAX(last_update) DESC
 LIMIT 5;
+-- Kalau tidak digrup by 1ji outputna kak 
+
+-- Nomor 7
+use sakila;
+SELECT
+    c.name AS nama,
+    COUNT(f.film_id) AS jumlah_film,
+    SUM(p.amount) AS total_payment,
+    CASE
+        WHEN c.name LIKE 'A%' AND COUNT(f.film_id) > 1000 AND SUM(p.amount) > (SELECT AVG(amount) FROM payment) THEN 'Kategori A Baik'
+        WHEN c.name LIKE 'A%' AND COUNT(f.film_id) < 1000 AND SUM(p.amount) < (SELECT AVG(amount) FROM payment) THEN 'Kategori A Kurang'
+        WHEN c.name LIKE 'C%' AND COUNT(f.film_id) > 1000 AND SUM(p.amount) > (SELECT AVG(amount) FROM payment) * 0.5 THEN 'Kategori C Baik'
+        WHEN c.name LIKE 'C%' AND COUNT(f.film_id) < 1000 AND SUM(p.amount) > (SELECT AVG(amount) FROM payment) * 0.5 THEN 'Kategori C Kurang'
+        WHEN c.name LIKE 'D%' AND COUNT(f.film_id) > 1000 AND SUM(p.amount) > (SELECT MIN(amount) FROM payment) THEN 'Kategori D Baik'
+        WHEN c.name LIKE 'D%' AND COUNT(f.film_id) < 1000 AND SUM(p.amount) > (SELECT MIN(amount) FROM payment) THEN 'Kategori D Kurang'
+        ELSE 'Kategori Lainnya'
+    END AS keterangan
+FROM
+    film f
+ join inventory i
+ using(film_id)
+ join rental r
+ using(inventory_id)
+JOIN
+    payment p 
+    using(rental_Id)
+
+    join film_category fc
+    using(film_id)
+    join category c
+    using(category_id)
+GROUP BY
+    c.name
+    limit 7;
+    
+    -- versi 2 heheuw
+    SELECT
+    c.name AS nama,
+    COUNT(f.film_id) AS jumlah_film,
+    SUM(p.amount) AS total_payment,
+    CASE
+        WHEN c.name LIKE 'A%' AND COUNT(f.film_id) > 1000 AND SUM(p.amount) > (SELECT AVG(amount) FROM payment) THEN 'Kategori A Baik'
+        WHEN c.name LIKE 'A%' AND COUNT(f.film_id) < 1000 AND SUM(p.amount) < (SELECT AVG(amount) FROM payment) THEN 'Kategori A Kurang'
+        WHEN c.name LIKE 'C%' AND COUNT(f.film_id) > 1000 AND SUM(p.amount) > (SELECT AVG(amount) FROM payment) * 0.5 THEN 'Kategori C Baik'
+        WHEN c.name LIKE 'C%' AND COUNT(f.film_id) < 1000 AND SUM(p.amount) < (SELECT AVG(amount) FROM payment) * 0.5 THEN 'Kategori C Kurang'
+        WHEN c.name LIKE 'D%' AND COUNT(f.film_id) > 1000 AND SUM(p.amount) > (SELECT MIN(amount) FROM payment) THEN 'Kategori D Baik'
+        WHEN c.name LIKE 'D%' AND COUNT(f.film_id) < 1000 AND SUM(p.amount) < (SELECT MIN(amount) FROM payment) THEN 'Kategori D Kurang'
+        ELSE 'Kategori Lainnya'
+    END AS keterangan
+FROM
+    film f
+JOIN
+    inventory i USING (film_id)
+JOIN
+    rental r USING (inventory_id)
+JOIN
+    payment p USING (rental_id)
+JOIN
+    film_category fc USING (film_id)
+JOIN
+    category c USING (category_id)
+GROUP BY
+    c.name
+    limit 7;
+
+
