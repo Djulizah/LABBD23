@@ -71,67 +71,32 @@ DROP DATABASE GENSHIN;
 
 -- NOMOR 4
 USE SAKILA;
--- SELECT
---     staff.staff_id,
---     CONCAT(staff.first_name, ' ', staff.last_name) AS 'Staff Name',
---     COUNT(rental.rental_id) AS 'Staff Total Customer Count',
---     SUM(payment.amount * 0.8) AS 'Staff Income'
--- FROM
---     staff
--- JOIN
---     payment ON staff.staff_id = payment.staff_id
--- JOIN
---     rental ON payment.rental_id = rental.rental_id
--- GROUP BY
---     staff.staff_id
--- ORDER BY
---     'Staff Income' DESC
--- LIMIT 1;
-
-SELECT
-    staff.staff_id,
-    CONCAT(staff.first_name, ' ', staff.last_name) AS 'Staff Name',
-    COUNT(customer.customer_id) AS 'Staff Total Customer Count',
-    SUM(rental.customer_id * 0.8) AS 'Staff Income'
-FROM
-    staff
-JOIN
-    payment ON staff.staff_id = payment.staff_id
-JOIN
-    rental ON payment.rental_id = rental.rental_id
-JOIN
-    customer ON rental.customer_id = customer.customer_id
-GROUP BY
-    staff.staff_id
-ORDER BY
-    'Staff Income' DESC
-LIMIT 1;
-
 SELECT
     staff.staff_id,
     CONCAT(staff.first_name, ' ', staff.last_name) AS 'Staff Name',
     COUNT(subquery.customer_id) AS 'Staff Total Customer Count',
-    SUM(subquery.total_rental * 0.8) AS 'Staff Income'
+    (SUM(subquery.money) * 0.8) AS 'Staff Income'
 FROM
-    staff
+    payment 
+inner join staff 
+using(staff_id)
 JOIN (
     SELECT
-        payment.staff_id,
-        rental.customer_id,
-        COUNT(rental.rental_id) AS total_rental
+        sum(amount) as 'Money',
+        customer_id,
+        staff_id
     FROM
         payment
-    JOIN
-        rental ON payment.rental_id = rental.rental_id
     GROUP BY
-        payment.staff_id, rental.customer_id
-) AS subquery ON subquery.staff_id = staff.staff_id
+        customer_id
+) AS subquery 
+ON payment.customer_id = subquery.customer_id and payment.staff_id = subquery.staff_id
 GROUP BY
-    staff.staff_id
+    subquery.staff_id
 ORDER BY
     'Staff Income' DESC
 LIMIT 1;
--- ada dua jawaban ini kak, nda tau mana benar
+
 
 -- NOMOR 5
 use sakila;
@@ -157,64 +122,34 @@ WHERE
   ranking = 1;
 
 -- NOMOR 6  
--- SELECT
---     CASE
---         WHEN TIMESTAMPDIFF(SECOND, MAX(last_update), NOW()) < 60 THEN CONCAT('Terakhir diupdate ', TIMESTAMPDIFF(SECOND, MAX(last_update), NOW()), ' detik lalu')
---         WHEN TIMESTAMPDIFF(MINUTE, MAX(last_update), NOW()) < 60 THEN CONCAT('Terakhir diupdate ', TIMESTAMPDIFF(MINUTE, MAX(last_update), NOW()), ' menit lalu')
---         WHEN TIMESTAMPDIFF(HOUR, MAX(last_update), NOW()) < 24 THEN CONCAT('Terakhir diupdate ', TIMESTAMPDIFF(HOUR, MAX(last_update), NOW()), ' jam lalu')
---         ELSE CONCAT('Terakhir diupdate ', DATE_FORMAT(MAX(last_update), '%W, %d %M %Y'))
---     END AS last_update,
---     CONCAT('Perubahan pada data ', table_name) AS action
--- FROM (
---     SELECT last_update, 'store' AS table_name FROM store
---     UNION ALL
---     SELECT last_update, 'payment' FROM payment
---     UNION ALL
---     SELECT last_update, 'rental' FROM rental
---     UNION ALL
---     SELECT last_update, 'film' FROM film
---     UNION ALL
---     SELECT last_update, 'actor' FROM actor
---     UNION ALL
---     SELECT last_update, 'inventory' FROM inventory
--- ) AS updates
--- GROUP BY last_update, table_name
--- ORDER BY last_update DESC
--- LIMIT 5;
-
-SELECT
+SELECT distinct
     CASE
-        WHEN ABS(TIMESTAMPDIFF(HOUR, '2006-02-23 05:00:00', MAX(last_update))) > 24 THEN CONCAT_WS(',', DAYNAME(MAX(last_update)), DATE_FORMAT(MAX(last_update), '%d %M %Y'))
-        WHEN ABS(TIMESTAMPDIFF(SECOND, '2006-02-23 05:00:00', MAX(last_update))) > 60 THEN CONCAT_WS(',', DAYNAME(MAX(last_update)), DATE_FORMAT(MAX(last_update), '%d %M %Y'))
-        WHEN ABS(TIMESTAMPDIFF(MINUTE, '2006-02-23 05:00:00', MAX(last_update))) > 60 THEN CONCAT_WS(',', DAYNAME(MAX(last_update)), DATE_FORMAT(MAX(last_update), '%d %M %Y'))
-        ELSE CONCAT('Terakhir diupdate ', DATE_FORMAT(MAX(last_update), '%W, %d %M %Y'))
-    END AS last_update,
-    CASE
-        WHEN table_name = 'store' THEN 'Perubahan Data Store'
-        WHEN table_name = 'payment' THEN 'Perubahan Data Payment'
-        WHEN table_name = 'rental' THEN 'Perubahan Data Rental'
-        WHEN table_name = 'film' THEN 'Perubahan Data Film'
-        WHEN table_name = 'actor' THEN 'Perubahan Data Actor'
-        WHEN table_name = 'inventory' THEN 'Perubahan Data Inventory'
-        ELSE 'Perubahan Data Lainnya'
-    END AS action
-FROM (
-    SELECT last_update, 'store' AS table_name FROM store
-    UNION ALL
-    SELECT last_update, 'payment' FROM payment
-    UNION ALL
-    SELECT last_update, 'rental' FROM rental
-    UNION ALL
-    SELECT last_update, 'film' FROM film
-    UNION ALL
-    SELECT last_update, 'actor' FROM actor
-    UNION ALL
-    SELECT last_update, 'inventory' FROM inventory
-) AS updates
-GROUP BY table_name
-ORDER BY MAX(last_update) DESC
-LIMIT 5;
--- Kalau tidak digrup by 1ji outputna kak 
+        WHEN ABS(TIMESTAMPDIFF(HOUR,'2006-02-23 05:00:00', updates.last_update)) > 24 
+        THEN CONCAT_WS(',', DAYNAME(updates.last_update), DATE_FORMAT(updates.last_update, '%d %M %Y'))
+        WHEN ABS(TIMESTAMPDIFF(HOUR,'2006-02-23 05:00:00', updates.last_update)) >= 1 
+        THEN CONCAT_WS('Terakhir diupdate ', DAYNAME(updates.last_update), DATE_FORMAT(updates.last_update, 'Jam Lalu'))
+        WHEN ABS(TIMESTAMPDIFF(MINUTE,'2006-02-23 05:00:00', updates.last_update)) >= 1 
+        THEN CONCAT('Terakhir diupdate ', abs(timestampdiff(minute,'2006-02-23 05:00:00', updates.last_update)),  'Menit Lalu')
+        
+        ELSE CONCAT('Terakhir diupdate ', ABS(TIMESTAMPDIFF(second,'2006-02-23 05:00:00' , updates.last_update)), 'Detik lalu')
+    END AS 'last_update', Action
+    From(
+		select last_update, 'Perubahan Data Customer' as 'Action' from customer
+        union
+        select last_update, 'Perubahan Data Store' from store
+        union
+        select last_update, 'Perubahan Data Payment' from payment
+        union
+        select last_update, 'Perubahan Data Store' from rental
+        union
+        select last_update, 'Perubahan Data Film' from film
+        union
+        select last_update, 'Perubahan Data Actor' from actor
+        union
+        select last_update, 'Perubahan Data Inventory' from inventory
+    ) updates
+ORDER BY updates.last_update desc 
+limit 5;
 
 -- Nomor 7
 use sakila;
@@ -278,5 +213,23 @@ JOIN
 GROUP BY
     c.name
     limit 7;
-
+    
+    
+SELECT
+    staff.staff_id,
+    CONCAT(staff.first_name, ' ', staff.last_name) AS 'Staff Name',
+	count(customer.customer_id) as 'Staff Total Customer Count',
+    FORMAT(SUM(payment.amount) * 0.8, 3) AS 'Staff Income'
+FROM
+    staff
+JOIN
+    payment ON staff.staff_id = payment.staff_id
+JOIN
+    customer 
+    using(customer_id)
+GROUP BY
+    customer.customer_id
+ORDER BY
+    'Staff Income' DESC
+LIMIT 1;
 
