@@ -68,17 +68,29 @@ DROP DATABASE GENSHIN;
 SELECT
     staff.staff_id,
     CONCAT(staff.first_name, ' ', staff.last_name) AS 'Staff Name',
-    COUNT(rental.customer_id) AS 'Staff Total Customer Count',
-    SUM(payment.amount * 0.8) AS 'Staff Income'
+    COUNT(dew.customer_id) AS 'Staff Total Customer Count',
+    (SUM(dew.money) * 0.8) AS 'Staff Income'
 FROM
-    staff
-JOIN rental ON staff.staff_id = rental.staff_id
-JOIN payment ON rental.rental_id = payment.rental_id
+    payment 
+inner join staff 
+using(staff_id)
+JOIN (
+    SELECT
+        sum(amount) as 'Money',
+        customer_id,
+        staff_id
+    FROM
+        payment
+    GROUP BY
+        customer_id
+) AS dew
+ON payment.customer_id = dew.customer_id and payment.staff_id = dew.staff_id
 GROUP BY
-    staff.staff_id
+    dew.staff_id
 ORDER BY
     'Staff Income' DESC
 LIMIT 1;
+
 
 -- 5
 
