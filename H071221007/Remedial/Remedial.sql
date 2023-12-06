@@ -64,18 +64,23 @@ DROP DATABASE GENSHIN;
 
 -- no4
 -- tdk tau ini outputnya kak, tdk bisai jalan
-USE sakila;
-SELECT s.staff_id, CONCAT(s.first_name, ' ', s.last_name) AS staff_name,
-       SUM(p.amount * 0.8) AS total_profit
-FROM staff s
-JOIN (
-    SELECT r.staff_id, p.rental_id, SUM(p.amount) AS total_payment
-    FROM payment p
-    JOIN rental r ON p.rental_id = r.rental_id
-    GROUP BY r.staff_id, p.rental_id
-) AS subq ON s.staff_id = subq.staff_id
-GROUP BY s.staff_id, staff_name
-ORDER BY total_profit DESC
+SELECT
+    staff.staff_id,
+    CONCAT(staff.first_name, ' ', staff.last_name) AS 'Staff Name',
+    COUNT(subquery.customer_id) AS 'Staff Total Customer Count',      
+	 (SUM(subquery.money) * 0.8) AS 'Staff Income'
+FROM payment 
+INNER JOIN staff USING(staff_id)  
+	JOIN (
+    	SELECT SUM(amount) as 'money',
+        customer_id,
+        staff_id 
+		  FROM payment 
+		  GROUP BY customer_id
+) AS subquery 
+ON payment.customer_id = subquery.customer_id AND payment.staff_id = subquery.staff_id 
+GROUP BY subquery.staff_id
+ORDER BY `Staff Income` DESC
 LIMIT 1;
 -- error ki database ku kak, biar gini tdk bisa jg, yg lain jg tiba tiba hilang jadi 0 semua baru tdk bisa terakses, biar kode ini tdk bisa jalan
 SELECT * FROM film;
