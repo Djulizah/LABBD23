@@ -32,18 +32,20 @@ INSERT INTO Weapon_type (weapon) VALUES
 ('sword'), ('claymore'), ('polearm'), ('bow'), ('catalyst');
 
 INSERT INTO playable_characters (name, isBuild, element_id, weapon_id) VALUES
-('furina', 1, 5, 1),
-('nahida', 1, 4, 5),
-('xingqiu', 1, 5, 1),
-('raiden shogun', 0, 3, 3),
-('tartaglia', 0, 5, 4),
-('sayu', 0, 1, 4),
-('kokomi', 0, 5, 5),
-('diona', 0, 7, 4),
-('zhongli', 0, 2, 3),
-('yoimiya', 1, 6, 4),
-('venti', 0, 1, 4),
-('ayaka', 0, 7, 1);
+('furina', TRUE, 5, 1),
+('nahida', TRUE, 4, 5),
+('xingqiu', TRUE, 5, 1),
+('raiden shogun', FALSE, 3, 3),
+('tartaglia', FALSE, 5, 4),
+('sayu', FALSE, 1, 4),
+('kokomi', FALSE, 5, 5),
+('diona', FALSE, 7, 4),
+('zhongli', FALSE, 2, 3),
+('yoimiya', TRUE, 6, 4),
+('venti', FALSE, 1, 4),
+('ayaka', FALSE, 7, 1);
+
+
 
 
 
@@ -58,23 +60,29 @@ DROP DATABASE GENSHIN;
 
 
 
+
+
 -- no4
-SELECT
-    s.staff_id,
-    CONCAT(s.first_name, ' ', s.last_name) AS 'Staff Name',
-	 COUNT(c.customer_id) as 'Staff Total Customer Count',
-    FORMAT(SUM(py.amount) * 0.8, 3) AS 'Staff Income'
-FROM
-    staff s
-JOIN
-    payment py ON s.staff_id = py.staff_id
-JOIN
-    customer c ON py.customer_id = c.customer_id 
-GROUP BY
-    c.customer_id
-ORDER BY
-    `Staff Income` DESC
+-- tdk tau ini outputnya kak, tdk bisai jalan
+USE sakila;
+SELECT s.staff_id, CONCAT(s.first_name, ' ', s.last_name) AS staff_name,
+       SUM(p.amount * 0.8) AS total_profit
+FROM staff s
+JOIN (
+    SELECT r.staff_id, p.rental_id, SUM(p.amount) AS total_payment
+    FROM payment p
+    JOIN rental r ON p.rental_id = r.rental_id
+    GROUP BY r.staff_id, p.rental_id
+) AS subq ON s.staff_id = subq.staff_id
+GROUP BY s.staff_id, staff_name
+ORDER BY total_profit DESC
 LIMIT 1;
+-- error ki database ku kak, biar gini tdk bisa jg, yg lain jg tiba tiba hilang jadi 0 semua baru tdk bisa terakses, biar kode ini tdk bisa jalan
+SELECT * FROM film;
+SHOW DATABASE sakila;
+
+
+
 
 
 
@@ -96,6 +104,8 @@ WHERE film_count = (
         SELECT film_id, COUNT(*) AS film_count FROM inventory
         GROUP BY film_id, store_id) AS a);
 
+  
+  
   
   
   
@@ -129,6 +139,8 @@ SELECT DISTINCT
     ) updates
 ORDER BY updates.last_update DESC 
 LIMIT 5;
+
+
 
 
 
