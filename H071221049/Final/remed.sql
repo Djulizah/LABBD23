@@ -80,18 +80,24 @@ DROP DATABASE genshin;
 
 -- NO 4
 
-SELECT 
-	staff.staff_id,
-	CONCAT(staff.first_name, ' ', staff.last_name) AS 'Staff Name',
-	COUNT(customer.customer_id) AS 'Staff Total Customer Count',
-	SUM(payment.amount) AS 'Staff Income'
-FROM staff 
-JOIN payment  USING (staff_id)
-JOIN rental  USING (rental_id)
-JOIN customer  ON customer.customer_id = rental.customer_id
-GROUP BY staff.staff_id
-HAVING SUM(payment.amount) * 0.8
-ORDER BY `Staff Income` DESC 
+SELECT
+    staff.staff_id,
+    CONCAT(staff.first_name, ' ', staff.last_name) AS 'Staff Name',
+    COUNT(tp.customer_id) AS 'Staff Total Customer Count',
+    (SUM(tp.pendapatan) * 0.8) AS 'Staff Income'
+FROM payment 
+JOIN staff USING(staff_id)
+JOIN (
+	    SELECT
+	        SUM(amount) AS 'pendapatan',
+	        customer_id,
+	        staff_id
+	    FROM payment
+	    GROUP BY customer_id
+		) AS tp
+ON payment.customer_id = tp.customer_id AND payment.staff_id = tp.staff_id
+GROUP BY tp.staff_id
+ORDER BY 'Staff Income' DESC
 LIMIT 1;
 
 
